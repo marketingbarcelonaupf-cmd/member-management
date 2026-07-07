@@ -427,13 +427,9 @@ function makeQR(el, text){
 
 /* ---------- enllaç carnet digital (només dades de l'anvers) ---------- */
 function cardLink(data){
-  const p = new URLSearchParams({
-    n: data.numero || '',
-    nm: data.nom || '',
-    c: data.curs || '',
-    a: data.any_academic || ''
-  });
-  return new URL('carnet.html', location.href).href + '#' + p.toString();
+  const enc = v => encodeURIComponent(v || '');
+  const frag = `n=${enc(data.numero)}&nm=${enc(data.nom)}&c=${enc(data.curs)}&a=${enc(data.any_academic)}`;
+  return new URL('carnet.html', location.href).href + '#' + frag;
 }
 
 async function copyToClipboard(text, btn, okLabel){

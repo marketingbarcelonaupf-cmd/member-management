@@ -35,7 +35,7 @@
 
   .card{
     width:min(400px, 94vw);
-    aspect-ratio:400/252;
+    min-height:min(252px, 59.2vw);
     border-radius:16px;
     position:relative;
     overflow:hidden;
@@ -52,11 +52,12 @@
   }
   .content{
     position:relative; z-index:1;
-    height:100%;
+    min-height:min(252px, 59.2vw);
     padding:5.5% 6%;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
+    gap:14px;
   }
   .logo-img{ height:25%; display:block; }
   .uni{
@@ -153,15 +154,25 @@ function esc(s){
   return d.innerHTML;
 }
 
+function decodeField(v){
+  if(v == null) return '';
+  try{
+    // + -> espai, i després decodifica %XX; tolerant a errors de codificació
+    return decodeURIComponent(String(v).replace(/\+/g, ' '));
+  }catch(e){
+    return String(v).replace(/\+/g, ' ');
+  }
+}
+
 function render(){
   const app = document.getElementById('app');
   const params = new URLSearchParams(location.hash.slice(1));
-  const numero = params.get('n');
-  const nom = params.get('nm');
-  const curs = params.get('c');
-  const any_academic = params.get('a');
+  const numero = decodeField(params.get('n'));
+  const nom = decodeField(params.get('nm'));
+  const curs = decodeField(params.get('c'));
+  const any_academic = decodeField(params.get('a'));
 
-  if(!numero || !nom){
+  if(!numero){
     app.innerHTML = `
       <div class="error-box">
         <b>Enllaç incomplet</b><br>
