@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Carnet ELSA">
+<title>El meu carnet · ELSA Barcelona-UPF</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --elsa-blue:#0a3087;
+    --elsa-blue-dark:#07215f;
+    --elsa-blue-pale:#b3c8f9;
+    --elsa-orange:#ff7400;
+    --grey:#666666;
+  }
+  *{box-sizing:border-box;}
+  html, body{ height:100%; }
+  body{
+    margin:0;
+    font-family:'Lato', sans-serif;
+    background:#f3f5f9;
+    color:#1a1a1a;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    padding:24px 16px;
+    min-height:100vh;
+  }
+
+  .card{
+    width:min(400px, 94vw);
+    aspect-ratio:400/252;
+    border-radius:16px;
+    position:relative;
+    overflow:hidden;
+    color:#fff;
+    box-shadow:0 10px 26px rgba(4,20,57,0.30);
+    flex-shrink:0;
+  }
+  .card-bg{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 108% -8%, rgba(58,119,234,0.55) 0%, rgba(58,119,234,0) 45%),
+      radial-gradient(circle at -10% 112%, rgba(58,119,234,0.45) 0%, rgba(58,119,234,0) 42%),
+      linear-gradient(150deg, var(--elsa-blue-dark) 0%, var(--elsa-blue) 55%, #0d3cab 100%);
+  }
+  .content{
+    position:relative; z-index:1;
+    height:100%;
+    padding:5.5% 6%;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .logo-img{ height:25%; display:block; }
+  .uni{
+    font-size:clamp(8px, 2.4vw, 9.5px);
+    letter-spacing:.12em;
+    color:var(--elsa-blue-pale);
+    margin-top:6px;
+    font-weight:700;
+  }
+  .kicker{
+    font-size:clamp(8px, 2.5vw, 10px);
+    letter-spacing:.12em;
+    color:var(--elsa-blue-pale);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .name{
+    font-family:'EB Garamond', serif;
+    font-weight:600;
+    font-size:clamp(19px, 6.5vw, 26px);
+    line-height:1.15;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-bottom:10px;
+  }
+  .row{ display:flex; gap:6%; align-items:flex-end; }
+  .field-label{
+    font-size:clamp(7px, 2.2vw, 9px);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--elsa-blue-pale);
+    margin-bottom:2px;
+  }
+  .field-value{
+    font-weight:900;
+    font-size:clamp(11px, 3.6vw, 14.5px);
+  }
+
+  .qr-panel{
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 4px 16px rgba(10,48,135,0.10);
+    padding:20px 26px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .qr-panel .qr-box img, .qr-panel .qr-box canvas{ display:block; }
+  .qr-caption{
+    font-size:12px;
+    color:var(--grey);
+    text-align:center;
+    line-height:1.4;
+  }
+  .qr-caption b{ color:var(--elsa-blue); }
+
+  .install-hint{
+    max-width:400px;
+    text-align:center;
+    font-family:'EB Garamond', serif;
+    font-size:14px;
+    color:var(--grey);
+    line-height:1.55;
+  }
+  .install-hint b{ color:var(--elsa-blue); font-family:'Lato',sans-serif; font-size:12px; }
+
+  .error-box{
+    max-width:420px;
+    background:#fff;
+    border:1px solid #d5d8e0;
+    border-radius:12px;
+    padding:22px 26px;
+    text-align:center;
+    font-family:'EB Garamond', serif;
+    font-size:15px;
+    color:#1a1a1a;
+    line-height:1.6;
+  }
+  .error-box b{ color:var(--elsa-blue); font-family:'Lato',sans-serif; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+const LOGO_SRC = "ELSA_BARCELONA-UPF_white.png"; // mateix fitxer que el generador, mateixa carpeta
+
+function esc(s){
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const params = new URLSearchParams(location.hash.slice(1));
+  const numero = params.get('n');
+  const nom = params.get('nm');
+  const curs = params.get('c');
+  const any_academic = params.get('a');
+
+  if(!numero || !nom){
+    app.innerHTML = `
+      <div class="error-box">
+        <b>Enllaç incomplet</b><br>
+        Aquest enllaç no conté les dades del carnet. Demana a la Junta Directiva
+        d'<b>ELSA Barcelona-UPF</b> que et torni a enviar el teu enllaç personal.
+      </div>`;
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="card">
+      <div class="card-bg"></div>
+      <div class="content">
+        <div>
+          <img class="logo-img" src="${LOGO_SRC}" alt="ELSA logo">
+          <div class="uni">UNIVERSITAT POMPEU FABRA</div>
+        </div>
+        <div>
+          <div class="kicker">Carnet d'associat</div>
+          <div class="name">${esc(nom)}</div>
+          <div class="row">
+            <div>
+              <div class="field-label">Curs</div>
+              <div class="field-value">${esc(curs)}</div>
+            </div>
+            <div>
+              <div class="field-label">Any acadèmic</div>
+              <div class="field-value">${esc(any_academic)}</div>
+            </div>
+            <div>
+              <div class="field-label">N. de soci@</div>
+              <div class="field-value">${esc(numero)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qr-panel">
+      <div class="qr-box" id="qr"></div>
+      <div class="qr-caption">Mostra aquest codi a l'entrada dels esdeveniments<br><b>N. de soci@ ${esc(numero)}</b></div>
+    </div>
+
+    <div class="install-hint" id="installHint"></div>
+  `;
+
+  new QRCode(document.getElementById('qr'), {
+    text: String(numero),
+    width: 148,
+    height: 148,
+    colorDark: '#07215f',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const hint = document.getElementById('installHint');
+  if(standalone){
+    hint.textContent = '';
+  } else if(isIOS){
+    hint.innerHTML = `<b>GUARDA EL TEU CARNET</b><br>A Safari: toca el botó de Compartir <span style="font-family:sans-serif;">&#x2191;</span> i tria «Afegir a pantalla d'inici». Tindràs el carnet com una app.`;
+  } else {
+    hint.innerHTML = `<b>GUARDA EL TEU CARNET</b><br>Al menú del navegador (⋮), tria «Afegir a pantalla d'inici» per tenir el carnet com una app.`;
+  }
+}
+
+window.addEventListener('hashchange', render);
+render();
+</script>
+
+</body>
+</html>

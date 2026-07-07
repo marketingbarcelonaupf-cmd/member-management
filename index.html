@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>Carnet d'associat · ELSA Barcelona-UPF</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --elsa-blue:#0a3087;
+    --elsa-blue-dark:#07215f;
+    --elsa-blue-pale:#b3c8f9;
+    --elsa-orange:#ff7400;
+    --grey:#666666;
+    --paper:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Lato', sans-serif;
+    background:#eef0f4;
+    color:#1a1a1a;
+    padding:32px 16px 80px;
+  }
+  h1{
+    font-weight:900;
+    font-size:22px;
+    color:var(--elsa-blue);
+    text-align:center;
+    margin:0 0 4px;
+    letter-spacing:.5px;
+  }
+  .subtitle{
+    text-align:center;
+    font-family:'EB Garamond', serif;
+    color:var(--grey);
+    margin:0 0 28px;
+    font-size:15px;
+  }
+  .layout{
+    display:flex;
+    flex-wrap:wrap;
+    gap:36px;
+    max-width:1100px;
+    margin:0 auto;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .panel{
+    background:var(--paper);
+    border-radius:10px;
+    padding:22px 24px;
+    box-shadow:0 2px 10px rgba(10,48,135,0.08);
+    width:340px;
+    flex-shrink:0;
+  }
+  .panel h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--elsa-blue);
+    margin:0 0 14px;
+    border-bottom:2px solid var(--elsa-orange);
+    padding-bottom:8px;
+  }
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    color:var(--grey);
+    margin:12px 0 4px;
+  }
+  input, textarea{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid #d5d8e0;
+    border-radius:6px;
+    font-family:'Lato', sans-serif;
+    font-size:14px;
+    color:#1a1a1a;
+  }
+  textarea{ resize:vertical; min-height:100px; font-family:'Lato',monospace; font-size:12px;}
+  .btn{
+    margin-top:14px;
+    width:100%;
+    background:var(--elsa-blue);
+    color:#fff;
+    border:none;
+    padding:10px 14px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    letter-spacing:.03em;
+  }
+  .btn:hover{ background:var(--elsa-blue-dark); }
+  .btn.secondary{
+    background:#fff;
+    color:var(--elsa-blue);
+    border:1.5px solid var(--elsa-blue);
+  }
+  .btn.secondary:hover{ background:#eef2fb; }
+  .btn.mini{
+    width:auto;
+    margin-top:0;
+    padding:7px 14px;
+    font-size:12px;
+  }
+  .btn:disabled{ opacity:.55; cursor:wait; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .hint{
+    font-size:11px;
+    color:#8a8f9c;
+    margin-top:6px;
+    line-height:1.4;
+  }
+  .logo-warning{
+    display:none;
+    background:#fff4e5;
+    border:1px solid var(--elsa-orange);
+    color:#7a4a00;
+    border-radius:8px;
+    padding:10px 14px;
+    font-size:12px;
+    max-width:700px;
+    margin:0 auto 20px;
+    line-height:1.5;
+  }
+
+  /* ---------- CARD ---------- */
+  .card-wrap{ display:flex; flex-direction:column; gap:14px; align-items:center; }
+  .card{
+    width:400px;
+    height:252px;
+    border-radius:16px;
+    position:relative;
+    overflow:hidden;
+    font-family:'Lato', sans-serif;
+    box-shadow:0 10px 26px rgba(4,20,57,0.35);
+  }
+  .card-bg{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 108% -8%, rgba(58,119,234,0.55) 0%, rgba(58,119,234,0) 45%),
+      radial-gradient(circle at -10% 112%, rgba(58,119,234,0.45) 0%, rgba(58,119,234,0) 42%),
+      linear-gradient(150deg, var(--elsa-blue-dark) 0%, var(--elsa-blue) 55%, #0d3cab 100%);
+  }
+
+  /* ---- ANVERS ---- */
+  .card-front{ color:#fff; }
+  .card-front .content{
+    position:relative; z-index:1;
+    height:100%;
+    padding:22px 24px 18px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .card-front .logo-img{ height:64px; display:block; }
+  .card-front .uni{
+    font-size:9.5px;
+    letter-spacing:.12em;
+    color:var(--elsa-blue-pale);
+    margin-top:6px;
+    font-weight:700;
+  }
+  .card-front .kicker{
+    font-size:10px;
+    letter-spacing:.12em;
+    color:var(--elsa-blue-pale);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .card-front .name{
+    font-family:'EB Garamond', serif;
+    font-weight:600;
+    font-size:26px;
+    line-height:1.15;
+    color:#fff;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-bottom:10px;
+  }
+  .card-front .row{ display:flex; gap:22px; align-items:flex-end; }
+  .card-front .field-label{
+    font-size:9px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--elsa-blue-pale);
+    margin-bottom:2px;
+  }
+  .card-front .field-value{
+    font-weight:900;
+    font-size:14.5px;
+    color:#fff;
+  }
+
+  /* ---- REVERS ---- */
+  .card-back{ color:#fff; }
+  .card-back .content{
+    position:relative; z-index:1;
+    height:100%;
+    padding:22px 24px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .back-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+  }
+  .card-back .contact-block{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px 20px;
+    margin-top:4px;
+    flex:1;
+    min-width:0;
+  }
+  .card-back .contact-block .field-label{
+    font-size:9px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--elsa-blue-pale);
+    margin:0 0 3px;
+  }
+  .card-back .contact-block .field-value{
+    font-weight:700;
+    font-size:12.5px;
+    color:#fff;
+    word-break:break-word;
+  }
+  .qr-holder{
+    background:#fff;
+    border-radius:10px;
+    padding:8px;
+    width:92px;
+    height:92px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .qr-holder img, .qr-holder canvas{ display:block; width:76px !important; height:76px !important; }
+  .card-back .footer-back{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .card-back .logo-white{ height:22px; }
+  .card-back .site{
+    font-size:9.5px;
+    color:var(--elsa-blue-pale);
+    text-align:right;
+    line-height:1.4;
+  }
+
+  #batchOutput{
+    max-width:1100px;
+    margin:36px auto 0;
+    display:flex;
+    flex-wrap:wrap;
+    gap:28px;
+    justify-content:center;
+  }
+
+  @media print{
+    body{ background:#fff; padding:0; }
+    .panel, h1, .subtitle, .btn, .logo-warning{ display:none; }
+    .card{ box-shadow:none; margin:8px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>CARNET D'ASSOCIAT · ELSA BARCELONA-UPF</h1>
+<p class="subtitle">Genera, previsualitza i descarrega els carnets — cap dada s'emmagatzema en aquesta pàgina</p>
+
+<div class="logo-warning" id="logoWarning">
+  <b>⚠ No s'ha trobat el logo.</b> Comprova que el fitxer
+  <code>ELSA_BARCELONA-UPF_white.png</code> és a la mateixa carpeta que aquest HTML,
+  amb el nom exacte (majúscules, guió i guió baix inclosos). GitHub Pages distingeix majúscules de minúscules.
+</div>
+
+<div class="layout">
+
+  <!-- PANELL DE CONTROL -->
+  <div class="panel">
+    <h2>Dades del soci</h2>
+
+    <label for="numero">Número de soci</label>
+    <input id="numero" value="0247" />
+
+    <label for="nom">Nom i cognoms</label>
+    <input id="nom" value="Zhen Wang" />
+
+    <label for="curs">Curs / Grau</label>
+    <input id="curs" value="3r Grau en Dret" />
+
+    <label for="any_academic">Any acadèmic</label>
+    <input id="any_academic" value="2025/2026" />
+
+    <label for="telefon">Telèfon</label>
+    <input id="telefon" value="+34 600 000 000" />
+
+    <label for="email">Correu electrònic</label>
+    <input id="email" value="zhen.wang@upf.edu" />
+
+    <label for="dni">DNI (es mostrarà com *****000A)</label>
+    <input id="dni" value="12345000A" />
+
+    <button class="btn" onclick="renderSingle()">Actualitza el carnet</button>
+    <button class="btn secondary" onclick="downloadSingle(this)">Baixa aquest carnet (PNG)</button>
+    <button class="btn secondary" onclick="copySingleLink(this)">Copia enllaç carnet digital (iPhone/Android)</button>
+
+    <h2 style="margin-top:26px;">Generació per lot (CSV)</h2>
+    <label for="batch">Una línia per soci · numero,nom,curs,any,telefon,email,dni</label>
+    <textarea id="batch">0247,Zhen Wang,3r Grau en Dret,2025/2026,+34 600 000 000,zhen.wang@upf.edu,12345000A
+0248,Laia Ferrer,1r Grau en Dret,2025/2026,+34 611 111 111,laia.ferrer@upf.edu,87654321B
+0249,Marc Solà,LLM Dret Internacional,2025/2026,+34 622 222 222,marc.sola@upf.edu,11223344C</textarea>
+    <button class="btn secondary" onclick="renderBatch()">Genera tots els carnets</button>
+    <button class="btn" onclick="downloadAllZip(this)">Baixa-ho tot (ZIP de PNG)</button>
+    <button class="btn secondary" onclick="downloadLinksCSV()">Baixa llista d'enllaços digitals (CSV)</button>
+    <p class="hint">L'enllaç digital només conté número, nom, curs i any (mai telèfon, email ni DNI) i va al fragment de la URL (#), que el navegador no envia mai al servidor. El QR del revers conté només el número de soci. No pugeu mai el CSV de socis al repositori.</p>
+  </div>
+
+  <!-- PREVISUALITZACIÓ -->
+  <div class="card-wrap">
+
+    <div class="card card-front" id="cardFront">
+      <div class="card-bg"></div>
+      <div class="content">
+        <div>
+          <img class="logo-img elsa-logo" src="ELSA_BARCELONA-UPF_white.png" alt="ELSA logo">
+          <div class="uni">UNIVERSITAT POMPEU FABRA</div>
+        </div>
+        <div>
+          <div class="kicker">Carnet d'associat</div>
+          <div class="name" id="p-nom">Zhen Wang</div>
+          <div class="row">
+            <div>
+              <div class="field-label">Curs</div>
+              <div class="field-value" id="p-curs">3r Grau en Dret</div>
+            </div>
+            <div>
+              <div class="field-label">Any acadèmic</div>
+              <div class="field-value" id="p-any">2025/2026</div>
+            </div>
+            <div>
+              <div class="field-label">N. de soci@</div>
+              <div class="field-value" id="p-numero">0247</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-back" id="cardBack">
+      <div class="card-bg"></div>
+      <div class="content">
+        <div class="back-top">
+          <div class="contact-block">
+            <div>
+              <div class="field-label">Telèfon</div>
+              <div class="field-value" id="p-telefon">+34 600 000 000</div>
+            </div>
+            <div>
+              <div class="field-label">Correu electrònic</div>
+              <div class="field-value" id="p-email">zhen.wang@upf.edu</div>
+            </div>
+            <div>
+              <div class="field-label">DNI</div>
+              <div class="field-value" id="p-dni">*****000A</div>
+            </div>
+          </div>
+          <div class="qr-holder"><div id="qr-single"></div></div>
+        </div>
+        <div class="footer-back">
+          <img class="logo-white elsa-logo" src="ELSA_BARCELONA-UPF_white.png" alt="ELSA">
+          <div class="site">ELSA Barcelona-UPF · elsa.org<br>president.barcelonaupf@es.elsa.org</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="batchOutput"></div>
+
+<script>
+const LOGO_SRC = "ELSA_BARCELONA-UPF_white.png"; // ha de coincidir EXACTAMENT amb el nom del fitxer al repo
+const batchRegistry = []; // {numero, data, frontEl, backEl}
+
+/* avís si el logo no carrega (nom incorrecte, majúscules, etc.) */
+document.querySelectorAll('img.elsa-logo').forEach(img => {
+  img.addEventListener('error', () => {
+    document.getElementById('logoWarning').style.display = 'block';
+  });
+});
+
+function maskDNI(dni){
+  const clean = (dni || '').trim();
+  if(clean.length < 4) return clean;
+  return '*****' + clean.slice(-4);
+}
+
+function safeName(numero){
+  return String(numero || 'soci').replace(/[^\w-]/g, '_');
+}
+
+function makeQR(el, text){
+  el.innerHTML = '';
+  new QRCode(el, {
+    text: String(text || ''),
+    width: 76,
+    height: 76,
+    colorDark: '#07215f',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+/* ---------- enllaç carnet digital (només dades de l'anvers) ---------- */
+function cardLink(data){
+  const p = new URLSearchParams({
+    n: data.numero || '',
+    nm: data.nom || '',
+    c: data.curs || '',
+    a: data.any_academic || ''
+  });
+  return new URL('carnet.html', location.href).href + '#' + p.toString();
+}
+
+async function copyToClipboard(text, btn, okLabel){
+  const original = btn.textContent;
+  try{
+    await navigator.clipboard.writeText(text);
+    btn.textContent = okLabel || 'Enllaç copiat!';
+  }catch(e){
+    prompt('Copia manualment aquest enllaç:', text);
+  }
+  setTimeout(() => { btn.textContent = original; }, 2200);
+}
+
+function currentSingleData(){
+  return {
+    numero: document.getElementById('numero').value,
+    nom: document.getElementById('nom').value,
+    curs: document.getElementById('curs').value,
+    any_academic: document.getElementById('any_academic').value,
+    telefon: document.getElementById('telefon').value,
+    email: document.getElementById('email').value,
+    dni: document.getElementById('dni').value
+  };
+}
+
+function copySingleLink(btn){
+  copyToClipboard(cardLink(currentSingleData()), btn);
+}
+
+function downloadLinksCSV(){
+  if(batchRegistry.length === 0){ renderBatch(); }
+  if(batchRegistry.length === 0){ return; }
+  const rows = ['numero,nom,enllac_carnet_digital'];
+  for(const entry of batchRegistry){
+    const d = entry.data;
+    rows.push(`${d.numero},"${(d.nom||'').replace(/"/g,'""')}",${cardLink(d)}`);
+  }
+  const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  triggerDownload(url, 'enllacos_carnets_digitals.csv');
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/* ---------- carnet individual ---------- */
+function renderSingle(){
+  const data = currentSingleData();
+  document.getElementById('p-nom').textContent = data.nom;
+  document.getElementById('p-curs').textContent = data.curs;
+  document.getElementById('p-any').textContent = data.any_academic;
+  document.getElementById('p-numero').textContent = data.numero;
+  document.getElementById('p-telefon').textContent = data.telefon;
+  document.getElementById('p-email').textContent = data.email;
+  document.getElementById('p-dni').textContent = maskDNI(data.dni);
+  makeQR(document.getElementById('qr-single'), data.numero);
+}
+
+/* ---------- render a PNG ---------- */
+async function cardToCanvas(el){
+  return await html2canvas(el, { scale: 3, backgroundColor: null, useCORS: true });
+}
+
+function triggerDownload(href, filename){
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function downloadSingle(btn){
+  if(btn){ btn.disabled = true; }
+  try{
+    const num = safeName(document.getElementById('numero').value);
+    const front = await cardToCanvas(document.getElementById('cardFront'));
+    triggerDownload(front.toDataURL('image/png'), `carnet_${num}_anvers.png`);
+    const back = await cardToCanvas(document.getElementById('cardBack'));
+    triggerDownload(back.toDataURL('image/png'), `carnet_${num}_revers.png`);
+  } finally {
+    if(btn){ btn.disabled = false; }
+  }
+}
+
+/* ---------- lot ---------- */
+function cardHTML(data, idx){
+  return `
+  <div class="card-wrap">
+    <div class="card card-front" id="front-${idx}">
+      <div class="card-bg"></div>
+      <div class="content">
+        <div>
+          <img class="logo-img elsa-logo" src="${LOGO_SRC}" alt="ELSA logo">
+          <div class="uni">UNIVERSITAT POMPEU FABRA</div>
+        </div>
+        <div>
+          <div class="kicker">Carnet d'associat</div>
+          <div class="name">${data.nom}</div>
+          <div class="row">
+            <div>
+              <div class="field-label">Curs</div>
+              <div class="field-value">${data.curs}</div>
+            </div>
+            <div>
+              <div class="field-label">Any acadèmic</div>
+              <div class="field-value">${data.any_academic}</div>
+            </div>
+            <div>
+              <div class="field-label">N. de soci@</div>
+              <div class="field-value">${data.numero}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card card-back" id="back-${idx}">
+      <div class="card-bg"></div>
+      <div class="content">
+        <div class="back-top">
+          <div class="contact-block">
+            <div>
+              <div class="field-label">Telèfon</div>
+              <div class="field-value">${data.telefon}</div>
+            </div>
+            <div>
+              <div class="field-label">Correu electrònic</div>
+              <div class="field-value">${data.email}</div>
+            </div>
+            <div>
+              <div class="field-label">DNI</div>
+              <div class="field-value">${maskDNI(data.dni)}</div>
+            </div>
+          </div>
+          <div class="qr-holder"><div id="qr-${idx}"></div></div>
+        </div>
+        <div class="footer-back">
+          <img class="logo-white elsa-logo" src="${LOGO_SRC}" alt="ELSA">
+          <div class="site">ELSA Barcelona-UPF · elsa.org<br>president.barcelonaupf@es.elsa.org</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn secondary mini" onclick="downloadBatchCard(${idx}, this)">Baixa PNG</button>
+      <button class="btn secondary mini" onclick="copyBatchLink(${idx}, this)">Copia enllaç digital</button>
+    </div>
+  </div>`;
+}
+
+function parseBatch(){
+  const lines = document.getElementById('batch').value.trim().split('\n').filter(Boolean);
+  return lines.map(l => {
+    const [numero, nom, curs, any_academic, telefon, email, dni] = l.split(',').map(s => (s||'').trim());
+    return {numero, nom, curs, any_academic, telefon, email, dni};
+  });
+}
+
+function renderBatch(){
+  const cards = parseBatch();
+  batchRegistry.length = 0;
+  document.getElementById('batchOutput').innerHTML =
+    cards.map((c, i) => cardHTML(c, i)).join('');
+  cards.forEach((c, i) => {
+    makeQR(document.getElementById(`qr-${i}`), c.numero);
+    batchRegistry.push({
+      numero: c.numero,
+      data: c,
+      frontEl: document.getElementById(`front-${i}`),
+      backEl: document.getElementById(`back-${i}`)
+    });
+  });
+  /* reactivar avís de logo per als nous <img> */
+  document.querySelectorAll('#batchOutput img.elsa-logo').forEach(img => {
+    img.addEventListener('error', () => {
+      document.getElementById('logoWarning').style.display = 'block';
+    });
+  });
+}
+
+function copyBatchLink(idx, btn){
+  const entry = batchRegistry[idx];
+  if(!entry) return;
+  copyToClipboard(cardLink(entry.data), btn, 'Copiat!');
+}
+
+async function downloadBatchCard(idx, btn){
+  const entry = batchRegistry[idx];
+  if(!entry) return;
+  if(btn){ btn.disabled = true; }
+  try{
+    const num = safeName(entry.numero);
+    const front = await cardToCanvas(entry.frontEl);
+    triggerDownload(front.toDataURL('image/png'), `carnet_${num}_anvers.png`);
+    const back = await cardToCanvas(entry.backEl);
+    triggerDownload(back.toDataURL('image/png'), `carnet_${num}_revers.png`);
+  } finally {
+    if(btn){ btn.disabled = false; }
+  }
+}
+
+async function downloadAllZip(btn){
+  if(batchRegistry.length === 0){ renderBatch(); }
+  if(batchRegistry.length === 0){ return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Generant ZIP…'; }
+  try{
+    const zip = new JSZip();
+    for(const entry of batchRegistry){
+      const num = safeName(entry.numero);
+      const front = await cardToCanvas(entry.frontEl);
+      const back  = await cardToCanvas(entry.backEl);
+      zip.file(`carnet_${num}_anvers.png`, front.toDataURL('image/png').split(',')[1], {base64:true});
+      zip.file(`carnet_${num}_revers.png`, back.toDataURL('image/png').split(',')[1], {base64:true});
+    }
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, 'carnets_elsa_barcelona_upf.zip');
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = 'Baixa-ho tot (ZIP de PNG)'; }
+  }
+}
+
+/* render inicial */
+renderSingle();
+renderBatch();
+</script>
+
+</body>
+</html>
