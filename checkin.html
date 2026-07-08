@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Check-in ELSA">
+<title>Check-in · ELSA Barcelona-UPF</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<style>
+  :root{
+    --elsa-blue:#0a3087;
+    --elsa-blue-dark:#07215f;
+    --elsa-blue-pale:#b3c8f9;
+    --elsa-orange:#ff7400;
+    --ok:#1f9d55;
+    --ok-bg:#e7f7ee;
+    --err:#d1373f;
+    --err-bg:#fdeceb;
+    --warn:#b8860b;
+    --warn-bg:#fff7e0;
+    --grey:#666666;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Lato', sans-serif;
+    background:#eef0f4;
+    color:#1a1a1a;
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  h1{
+    text-align:center;
+    color:var(--elsa-blue);
+    font-weight:900;
+    font-size:19px;
+    margin:0 0 4px;
+  }
+  .subtitle{
+    text-align:center;
+    font-family:'EB Garamond', serif;
+    color:var(--grey);
+    font-size:13.5px;
+    margin:0 0 20px;
+  }
+  .wrap{ max-width:460px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+
+  .panel{
+    background:#fff;
+    border-radius:12px;
+    padding:16px 18px;
+    box-shadow:0 2px 10px rgba(10,48,135,0.08);
+  }
+  .panel h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--elsa-blue);
+    margin:0 0 10px;
+    border-bottom:2px solid var(--elsa-orange);
+    padding-bottom:6px;
+  }
+  label{ display:block; font-size:11.5px; font-weight:700; color:var(--grey); margin:8px 0 3px; }
+  input, textarea{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid #d5d8e0;
+    border-radius:6px;
+    font-size:13.5px;
+    font-family:'Lato', sans-serif;
+  }
+  textarea{ min-height:70px; font-family:monospace; font-size:11.5px; resize:vertical; }
+  .btn{
+    margin-top:10px;
+    width:100%;
+    background:var(--elsa-blue);
+    color:#fff;
+    border:none;
+    padding:11px 14px;
+    border-radius:8px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .btn.secondary{ background:#fff; color:var(--elsa-blue); border:1.5px solid var(--elsa-blue); }
+  .btn.small{ padding:8px 10px; font-size:12.5px; }
+  .btn:disabled{ opacity:.5; cursor:wait; }
+  .status-line{ font-size:12px; color:var(--grey); margin-top:8px; line-height:1.5; }
+  .status-line b{ color:var(--elsa-blue); }
+  .hint{ font-size:11px; color:#8a8f9c; margin-top:6px; line-height:1.4; }
+  details summary{ cursor:pointer; font-size:12px; color:var(--elsa-blue); font-weight:700; }
+
+  /* càmera */
+  .cam-box{
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    background:#000;
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .cam-box video{ width:100%; height:100%; object-fit:cover; }
+  .cam-frame{
+    position:absolute; inset:12%;
+    border:3px solid rgba(255,255,255,.85);
+    border-radius:16px;
+    pointer-events:none;
+  }
+
+  .result-banner{
+    border-radius:12px;
+    padding:16px 18px;
+    text-align:center;
+    font-weight:900;
+    font-size:16px;
+    display:none;
+  }
+  .result-banner.ok{ display:block; background:var(--ok-bg); color:var(--ok); }
+  .result-banner.err{ display:block; background:var(--err-bg); color:var(--err); }
+  .result-banner.warn{ display:block; background:var(--warn-bg); color:var(--warn); }
+  .result-banner small{ display:block; font-weight:400; font-size:12px; margin-top:4px; }
+
+  .list-box{ max-height:220px; overflow-y:auto; }
+  .list-row{
+    display:flex; justify-content:space-between;
+    font-size:12.5px; padding:6px 0; border-bottom:1px solid #eee;
+  }
+  .list-row:last-child{ border-bottom:none; }
+  .list-row .n{ color:var(--elsa-blue); font-weight:700; }
+  .counts{ font-size:12.5px; color:var(--grey); margin-bottom:8px; }
+  .counts b{ color:var(--elsa-blue); }
+</style>
+</head>
+<body>
+
+<h1>CHECK-IN · ELSA BARCELONA-UPF</h1>
+<p class="subtitle">Escaneja el QR del carnet a l'entrada de l'esdeveniment</p>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>1 · Font de la llista de socis</h2>
+    <label for="sheetId">ID del full de càlcul (Google Sheets)</label>
+    <input id="sheetId" placeholder="p. ex. 1LvCYJCw62Xm0K8-44SefhecQUsJ1rvKVAaHCZ25wUeA">
+    <label for="sheetGid">GID de la pestanya pública (numero, nom)</label>
+    <input id="sheetGid" placeholder="p. ex. 123456789">
+    <button class="btn" id="syncBtn" onclick="syncFromSheet()">Sincronitza llista</button>
+    <div class="status-line" id="syncStatus">Encara no s'ha sincronitzat cap llista.</div>
+
+    <details style="margin-top:12px;">
+      <summary>Alternativa manual (si falla la sincronització)</summary>
+      <label for="manualCsv">Enganxa aquí numero,nom (una línia per soci)</label>
+      <textarea id="manualCsv" placeholder="0247,Zhen Wang&#10;0248,Laia Ferrer"></textarea>
+      <button class="btn secondary small" onclick="loadManualCsv()">Carrega aquesta llista</button>
+    </details>
+
+    <p class="hint">La llista es desa només en aquest telèfon (localStorage) i funciona sense connexió un cop sincronitzada. Aquesta pestanya del Sheet ha de contenir només <b>numero</b> i <b>nom</b> — mai telèfon, email ni DNI.</p>
+  </div>
+
+  <div class="panel">
+    <h2>2 · Escàner</h2>
+    <div class="cam-box" id="camBox">
+      <video id="video" playsinline muted></video>
+      <div class="cam-frame"></div>
+    </div>
+    <button class="btn" id="camBtn" onclick="toggleCamera()">Inicia la càmera</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+  </div>
+
+  <div class="result-banner" id="resultBanner"></div>
+
+  <div class="panel">
+    <h2>3 · Assistència registrada</h2>
+    <div class="counts" id="counts">0 escanejats / 0 a la llista</div>
+    <div class="list-box" id="attendanceList"></div>
+    <button class="btn secondary" onclick="downloadAttendance()">Descarrega assistència (CSV)</button>
+    <button class="btn secondary small" onclick="resetAttendance()" style="margin-top:8px;">Reinicia el registre d'avui</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------- estat ---------- */
+let members = {};        // { numero_normalitzat: {numero_original, nom} }
+let attendance = [];      // [{numero, nom, ts}]
+let scanning = false;
+let stream = null;
+let usingBarcodeDetector = false;
+let detector = null;
+let rafId = null;
+let lastScanTs = 0;
+
+const $ = id => document.getElementById(id);
+
+/* ---------- normalització de número (arregla el problema del zero inicial) ---------- */
+function normNum(v){
+  const s = String(v == null ? '' : v).trim();
+  const stripped = s.replace(/^0+(?=\d)/, '');
+  return stripped || s;
+}
+
+/* ---------- persistència local ---------- */
+function saveConfig(){
+  localStorage.setItem('checkin_sheetId', $('sheetId').value.trim());
+  localStorage.setItem('checkin_sheetGid', $('sheetGid').value.trim());
+}
+function loadConfig(){
+  $('sheetId').value = localStorage.getItem('checkin_sheetId') || '';
+  $('sheetGid').value = localStorage.getItem('checkin_sheetGid') || '';
+  const cached = localStorage.getItem('checkin_members');
+  if(cached){
+    try{
+      members = JSON.parse(cached);
+      const n = Object.keys(members).length;
+      $('syncStatus').innerHTML = `Llista en caché: <b>${n}</b> socis. (pot no ser la darrera versió)`;
+    }catch(e){}
+  }
+  const att = localStorage.getItem('checkin_attendance');
+  if(att){
+    try{ attendance = JSON.parse(att); }catch(e){}
+  }
+  renderAttendance();
+}
+function persistMembers(){
+  localStorage.setItem('checkin_members', JSON.stringify(members));
+}
+function persistAttendance(){
+  localStorage.setItem('checkin_attendance', JSON.stringify(attendance));
+}
+
+/* ---------- parseig CSV (suporta camps entre cometes amb comes) ---------- */
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n' || c === '\r'){
+        if(field !== '' || row.length){ row.push(field); rows.push(row); }
+        row = []; field = '';
+        if(c === '\r' && text[i+1] === '\n') i++;
+      } else field += c;
+    }
+  }
+  if(field !== '' || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+
+function buildMembersFromRows(rows){
+  const map = {};
+  let start = 0;
+  if(rows.length && /numero|número|n[uú]mero/i.test(rows[0][0] || '')){ start = 1; }
+  for(let i = start; i < rows.length; i++){
+    const numero = (rows[i][0] || '').trim();
+    const nom = (rows[i][1] || '').trim();
+    if(!numero) continue;
+    map[normNum(numero)] = { numero_original: numero, nom };
+  }
+  return map;
+}
+
+/* ---------- sincronització amb Google Sheets ---------- */
+async function syncFromSheet(){
+  const id = $('sheetId').value.trim();
+  const gid = $('sheetGid').value.trim();
+  if(!id || !gid){
+    $('syncStatus').textContent = "Cal l'ID del full i el GID de la pestanya pública.";
+    return;
+  }
+  saveConfig();
+  const btn = $('syncBtn');
+  btn.disabled = true;
+  $('syncStatus').textContent = 'Sincronitzant…';
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    members = buildMembersFromRows(rows);
+    persistMembers();
+    $('syncStatus').innerHTML = `✅ Sincronitzat: <b>${Object.keys(members).length}</b> socis (${new Date().toLocaleTimeString()}).`;
+    renderAttendance();
+  }catch(e){
+    $('syncStatus').innerHTML = `⚠️ No s'ha pogut sincronitzar (${e.message}). Comprova que la pestanya és "Qualsevol amb l'enllaç · Lector", o fes servir l'alternativa manual de sota.`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function loadManualCsv(){
+  const text = $('manualCsv').value.trim();
+  if(!text) return;
+  const rows = parseCSV(text);
+  members = buildMembersFromRows(rows);
+  persistMembers();
+  $('syncStatus').innerHTML = `Llista manual carregada: <b>${Object.keys(members).length}</b> socis.`;
+  renderAttendance();
+}
+
+/* ---------- càmera + escaneig ---------- */
+async function toggleCamera(){
+  if(scanning){ stopCamera(); return; }
+  const video = $('video');
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  }catch(e){
+    showResult('err', 'No es pot accedir a la càmera', e.message);
+    return;
+  }
+  video.srcObject = stream;
+  await video.play();
+  scanning = true;
+  $('camBtn').textContent = 'Atura la càmera';
+
+  if('BarcodeDetector' in window){
+    try{
+      const formats = await BarcodeDetector.getSupportedFormats();
+      if(formats.includes('qr_code')){
+        detector = new BarcodeDetector({ formats: ['qr_code'] });
+        usingBarcodeDetector = true;
+      }
+    }catch(e){ usingBarcodeDetector = false; }
+  }
+  scanLoop();
+}
+
+function stopCamera(){
+  scanning = false;
+  if(rafId) cancelAnimationFrame(rafId);
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  $('camBtn').textContent = 'Inicia la càmera';
+}
+
+async function scanLoop(){
+  if(!scanning) return;
+  const video = $('video');
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    let code = null;
+    if(usingBarcodeDetector){
+      try{
+        const results = await detector.detect(video);
+        if(results.length) code = results[0].rawValue;
+      }catch(e){ /* segueix intentant */ }
+    } else {
+      const canvas = $('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const result = jsQR(imgData.data, imgData.width, imgData.height);
+      if(result) code = result.data;
+    }
+    if(code) handleScan(code);
+  }
+  rafId = requestAnimationFrame(scanLoop);
+}
+
+/* ---------- validació d'un escaneig ---------- */
+function handleScan(rawValue){
+  const now = Date.now();
+  if(now - lastScanTs < 1500) return; // evita lectures duplicades del mateix frame
+  lastScanTs = now;
+
+  const key = normNum(rawValue);
+  const member = members[key];
+
+  if(!member){
+    showResult('err', 'No trobat a la llista', `Codi llegit: "${rawValue}"`);
+    return;
+  }
+  const already = attendance.find(a => normNum(a.numero) === key);
+  if(already){
+    showResult('warn', `${member.nom} — ja registrat/da`, `Soci@ ${member.numero_original}`);
+    return;
+  }
+  attendance.push({ numero: member.numero_original, nom: member.nom, ts: new Date().toISOString() });
+  persistAttendance();
+  renderAttendance();
+  showResult('ok', member.nom, `Soci@ ${member.numero_original} · vàlid ✓`);
+}
+
+function showResult(type, title, subtitle){
+  const el = $('resultBanner');
+  el.className = 'result-banner ' + type;
+  el.innerHTML = `${title}${subtitle ? `<small>${subtitle}</small>` : ''}`;
+  if(navigator.vibrate) navigator.vibrate(type === 'ok' ? 80 : [60,60,60]);
+}
+
+/* ---------- llista d'assistència ---------- */
+function renderAttendance(){
+  const total = Object.keys(members).length;
+  $('counts').innerHTML = `<b>${attendance.length}</b> escanejats / <b>${total}</b> a la llista`;
+  $('attendanceList').innerHTML = attendance
+    .slice().reverse()
+    .map(a => `<div class="list-row"><span>${a.nom}</span><span class="n">${a.numero}</span></div>`)
+    .join('') || '<div class="hint">Encara no hi ha ningú registrat.</div>';
+}
+
+function resetAttendance(){
+  if(!confirm("Segur que vols esborrar el registre d'assistència d'avui?")) return;
+  attendance = [];
+  persistAttendance();
+  renderAttendance();
+}
+
+function downloadAttendance(){
+  if(attendance.length === 0){ alert('Encara no hi ha cap assistent registrat.'); return; }
+  const rows = ['numero,nom,hora'];
+  attendance.forEach(a => {
+    rows.push(`${a.numero},"${a.nom.replace(/"/g,'""')}",${new Date(a.ts).toLocaleString()}`);
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `assistencia_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- init ---------- */
+loadConfig();
+</script>
+
+</body>
+</html>
